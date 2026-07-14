@@ -6,14 +6,16 @@ endif
 ENABLE_BEMU?=1
 
 # Simulator
-VERILATOR?=0
+VERILATOR?=1
 
 # Enables debug
-VCS_DEBUG?=1
+VCS_DEBUG?=0
 
 XPROP_CFG:=$(REPOROOT)/dv/standalone/cpu_subsystem/xprop.cfg
 
 ifeq ($(VERILATOR),1)
+	override VERILATOR := verilator
+	TB_TOP := top
 	VERILATOR_FILELIST?=$(REPOROOT)/dv/standalone/cpu_subsystem/run.verilator.f
 	VERILATOR_CONTROL_FILE=$(REPOROOT)/dv/standalone/cpu_subsystem/verilator_ctrl.vlt
 	VERILATOR_MAIN_CPP=$(REPOROOT)/dv/standalone/cpu_subsystem/csrc/Vtop_main.cpp
@@ -25,5 +27,5 @@ else
 endif
 
 .PHONY : all
-
+all: test
 

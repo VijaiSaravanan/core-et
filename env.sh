@@ -55,7 +55,7 @@ export ET_PG_RAM_ROM_DIR=
 
 export RISCV_GNU_TOOLCHAIN=/tools/src/riscv-gnu-toolchain
 export RISCV_BFD_BUILD=${RISCV_GNU_TOOLCHAIN}/build-binutils-pic
-export RISCV=/opt/et
+export RISCV=$HOME/vyoma/workspace/tools/install/riscv
 export VCSMXFLOW=0
 
 # Add DV common scripts to path
@@ -168,14 +168,12 @@ export DISABLE_TDC_DELETED_MSG=1        # Fixes the issue with KDB mismatch bug
 #path_remove ${VCS_HOME}/bin
 #export VCS_HOME=${cadpath}/tools/snps/vcs/R-2020.12-SP1-1
 #prepend_path ${VCS_HOME}/bin
+# --------------------------------------------------
+# Verilator
+# --------------------------------------------------
 
-#
-# Setup Verilator
-#
-
-export VERILATOR_HOME=/tools/verilator
+export VERILATOR_HOME=$HOME/vyoma/workspace/tools/verilator
 prepend_path ${VERILATOR_HOME}/bin
-
 #
 # Setup et-runsyn.pl
 #
@@ -222,19 +220,7 @@ export REPLACE_XRUN=vcs
 #source scl_source enable devtoolset-7 >&2
 
 # use ccache if available
-for CCACHE_PATH in /usr/lib64/ccache  /usr/lib/ccache; do
-  if [ -d $CCACHE_PATH  -a `which gcc` != $CCACHE_PATH/gcc ] ; then
-     prepend_path $CCACHE_PATH
-      break
-  fi
-done
 
-for CCACHE_PATH in /usr/lib64/ccache  /usr/lib/ccache; do
- if [ -d $CCACHE_PATH  -a `which riscv64-unknown-elf-g++` != $CCACHE_PATH/riscv64-unknown-elf-g++ ] ; then
-      prepend_path $CCACHE_PATH
-      break
-  fi
-done
 
 #
 # add git-hooks

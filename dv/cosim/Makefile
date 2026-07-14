@@ -41,12 +41,12 @@ ERBIUM ?= 1
 EXTRA_MAKE_OPTS ?=
 BFD_EXTRA_LIBS ?=
 
-ifdef GCC_HOME
-    CXX = $(GCC_HOME)/bin/g++
-    CC  = $(GCC_HOME)/bin/gcc
+ifdef /usr
+    CXX = /usr/bin/g++
+    CC  = /usr/bin/gcc
 else
-    CXX = g++-13
-    CC  = gcc-13
+    CXX = g++
+    CC  = gcc
 endif
 
 CXXFLAGS = -std=c++17 -g -DFMT_HEADER_ONLY $(EXTRA_MAKE_OPTS)
@@ -71,7 +71,7 @@ endif
 
 # Erbium chip support
 ifeq ($(ERBIUM),1)
-    CXXFLAGS += -DERBIUM
+    CXXFLAGS += -DERBIUM -DVERILATOR -DSYS_EMU
 else
     # Add extra errors
     CXXFLAGS += -Wall -Wextra -Werror -pedantic-errors
@@ -80,7 +80,7 @@ endif
 
 EXTRA_CPP_LIBS ?= $(COSIM)/src/3rparty
 EXTRA_SYSTEM_CPP_LIBS ?= /tools/aifoundry
-
+VERILATOR_ROOT=/usr/local/share/verilator
 # Add extra include flags
 CXXFLAGS += -I$(COSIM)/src \
 	    -I$(COSIM)/src/checker \
@@ -90,8 +90,12 @@ CXXFLAGS += -I$(COSIM)/src \
 	    -I$(EXTRA_CPP_LIBS)/cereal/1.3.0/include \
 	    -I$(EXTRA_CPP_LIBS)/toml11/3.1.0/include \
 	    -I$(SYSEMU) \
+		-I$(COSIM_UTILS)/libs \
+		-I$(REPOROOT)/extern/et-platform/erbium-hal/include \
+		-I$(REPOROOT)/extern/et-platform/sw-sysemu/sys_emu \
+		-I$(VERILATOR_ROOT)/include/vltstd \
+		-I$(VERILATOR_ROOT)/include \
 	    $(foreach d,$(BFD_INC),-I$(d)) \
-	    -I$(COSIM_UTILS)/libs \
 	    -I$(VCS_HOME)/include \
 	    -I$(cosim_OBJDIR)
 

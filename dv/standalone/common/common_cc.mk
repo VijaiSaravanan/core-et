@@ -2,9 +2,12 @@ ifndef SYSEMU
    $(error "Please execute 'source ./env.sh' or 'source ./env_csh.sh' in the repository root directory before calling make")
 endif
 
-cosim_OBJDIR    = $(BUILD_DIR_CSRC_LIB)
-libfpu_OBJDIR   = $(BUILD_DIR_CSRC_LIB)
-MONITORS_OBJDIR = $(BUILD_DIR_CSRC_LIB)
+# Default build directory for non-VCS flows (e.g. Verilator)
+BUILD_DIR_CSRC_LIB ?= $(BUILD_DIR)/csrc_lib
+
+cosim_OBJDIR    := $(BUILD_DIR_CSRC_LIB)
+libfpu_OBJDIR   := $(BUILD_DIR_CSRC_LIB)
+MONITORS_OBJDIR := $(BUILD_DIR_CSRC_LIB)
 
 $(BUILD_DIR_CSRC_LIB):
 	mkdir -p $@

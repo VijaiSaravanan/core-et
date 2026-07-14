@@ -7,10 +7,10 @@ MINION_DIAGS     = getenv('MINION_DIAGS')
 RISCV            = getenv('RISCV')
 COMPLIANCE_TESTS = getenv('COMPLIANCE_TESTS')
 
-assert REPOROOT         is not None, "setenv REPOROOT must be defined"
-assert MINION_DIAGS     is not None, "setenv MINION_DIAGS must be defined"
-assert RISCV            is not None, "setenv RISCV must be defined"
-assert COMPLIANCE_TESTS is not None, "setenv COMPLIANCE_TESTS must be defined"
+assert REPOROOT         != None, "setenv REPOROOT must be defined"
+assert MINION_DIAGS     != None, "setenv MINION_DIAGS must be defined"
+assert RISCV            != None, "setenv RISCV must be defined"
+assert COMPLIANCE_TESTS != None, "setenv COMPLIANCE_TESTS must be defined"
 # import utilities
 import io
 import math
@@ -1037,10 +1037,10 @@ else:
       reset       = re.search("\+START_PC=\S+", args)
       threads     = re.search("\+THREAD_MASK=\S+", args)
 
-      shire_mask  = shires.group().split('=', 1)[-1]  if shires  is not None else '0x1'
-      minion_mask = minions.group().split('=', 1)[-1] if minions is not None else '0x1'
-      reset_pc    = reset.group().split('=', 1)[-1]   if reset   is not None else '0x8000001000'
-      thread_mask = threads.group().split('=', 1)[-1] if threads is not None else '0x3'
+      shire_mask  = shires.group().split('=', 1)[-1]  if shires  != None else '0x1'
+      minion_mask = minions.group().split('=', 1)[-1] if minions != None else '0x1'
+      reset_pc    = reset.group().split('=', 1)[-1]   if reset   != None else '0x8000001000'
+      thread_mask = threads.group().split('=', 1)[-1] if threads != None else '0x3'
       single_thread = '-single_thread' if (int(thread_mask, 0) == 1) else '';
       have_master = (int(shire_mask, base=16) >> 32) & 1;
 
@@ -1073,7 +1073,7 @@ else:
       # -s|--shires N => run only N shires
       kernel = 1
       shires     = re.search("\+SHIRE_MASK=\S+", test_plusargs)
-      shire_mask = shires.group().split('=', 1)[-1]  if shires  is not None else '0x1'
+      shire_mask = shires.group().split('=', 1)[-1]  if shires  != None else '0x1'
       binary_compute_shire_mask = bin(int(shire_mask,16) & 0xffffffff)
       shire_count = binary_compute_shire_mask.count("1")
 
@@ -1120,7 +1120,7 @@ else:
 
       build_tags = ['directed']
       build_tags.extend(test_tags)
-      seed = user_seed if user_seed is not None else etdv_randint() if allow_rand_seed is True else 0
+      seed = user_seed if user_seed != None else etdv_randint() if allow_rand_seed == True else 0
 
       # Craft the run command
       run_cmd  = f'set -o pipefail\n'
@@ -1185,7 +1185,7 @@ else:
    def add_uc_diag(build, test_name, test_src, test_plusargs='', test_tags=[], cflags = '', checker=True, compile_diag=True, pre_test='', post_test=''):
       build_tags = ['ucblock', 'directed']
       build_tags.extend(test_tags)
-      seed = user_seed if user_seed is not None else etdv_randint() if allow_rand_seed is True else 0
+      seed = user_seed if user_seed != None else etdv_randint() if allow_rand_seed == True else 0
       no_diag = (test_name == '')
       elf_name = test_src.split('/')[-1].split('.')[0]
 
@@ -1228,7 +1228,7 @@ else:
    #Generates hex file from ELF
    def generate_minion_hex(command, test_path, test_name, generate_mem_desc):
       #if we want to generate new mem desc, otherwisw use the one provided by the test
-      if generate_mem_desc is True:
+      if generate_mem_desc == True:
          command += f'echo "ELF Load: {test_path}/{test_name}" > mem_desc.txt &&\n'
          command += f'elf2hex {test_path}/{test_name} memImage.hex &&\n'
          command += f'ln -sfn {test_path}/{test_name} test.elf &&\n'
@@ -1296,9 +1296,9 @@ $ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed=0 {ust_extra_sim_opts} +EMU_L
       build_tags = ['directed']
       build_tags.extend(test_tags)
       if (mtg_test):
-         seed = etdv_randint() if user_seed is None else user_seed
+         seed = etdv_randint() if user_seed == None else user_seed
       else:
-         seed = user_seed if user_seed is not None else etdv_randint() if ((allow_rand_seed is True) or (test_count > 1)) else 0
+         seed = user_seed if user_seed != None else etdv_randint() if ((allow_rand_seed == True) or (test_count > 1)) else 0
       no_diag = (diag == '')
       if maxshire_test:
           test_name = diag_path.replace(('$ETDV_RUNDIR/' if tglw else '$REPOROOT/dv/tests/ioshire/'), '').replace('/ioMax', '')
@@ -1391,7 +1391,7 @@ $ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed=0 {ust_extra_sim_opts} +EMU_L
          if ukernel_mode:
             run_cmd += f'cp {diag_path}/mem_desc.txt . && cp {diag_path}/*.mem . &&\n'
          if debug_mode:
-            if ioshire_test is not True:
+            if ioshire_test != True:
                 if (mtg_test):
                    run_cmd = add_debug_steps(run_cmd, 'base', f'{extra_sim_opts} {test_plusargs}', '100000000', mtg_test=True)
                    run_cmd += 'set +x && #disable verbose\n'
@@ -1424,7 +1424,7 @@ $ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed=0 {ust_extra_sim_opts} +EMU_L
             shire_mask = re.sub(r'\+SHIRE_MASK=', '', re.search("\+SHIRE_MASK=\S+", f'{extra_sim_opts} {test_plusargs} {common_sim_opts}').group())
          minion_mask = re.sub(r'\+MINION_MASK=', '', re.search("\+MINION_MASK=\S+", f'{extra_sim_opts} {test_plusargs} {common_sim_opts}').group())
          thread_mask = re.sub(r'\+THREAD_MASK=', '', re.search("\+THREAD_MASK=\S+", f'{extra_sim_opts} {test_plusargs} {common_sim_opts}').group())
-         if re.search("sp_ends_test", f'{extra_sim_opts} {test_plusargs} {common_sim_opts}') is not None:
+         if re.search("sp_ends_test", f'{extra_sim_opts} {test_plusargs} {common_sim_opts}') != None:
             sp_ends_test = '--sp_ends_test'
          else:
             sp_ends_test = ''
@@ -1475,7 +1475,7 @@ $ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed=0 {ust_extra_sim_opts} +EMU_L
             if ('postsi_noc_ust_ph3' in test_tags) or ('memshire_bu' in test_tags):
                diag_flags += ' +define+USE_REAL_DDRC '
 
-            power_eval_str = "true" if power_eval is True else "false"
+            power_eval_str = "true" if power_eval == True else "false"
 
             if not skip_zebu:
                run_cmd += f'$REPOROOT/dv/tools/diag_flow/diag_flow.sh -q {power_eval_str} {diag_flow_args} -e {load_tf_elf} -v {gen_pc} -z {zebu_path_file} -f \' \"{diag_flags}\" {diag_flow_cpus} --minboot \'"${{minboot}}" \n'
@@ -1541,10 +1541,10 @@ $ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed=0 {ust_extra_sim_opts} +EMU_L
    def tglw(glow_test, test_filter, build_a, tags = [], plusargs = '', pre_test = '', post_test = '', test_name='', glow_plus_args=''):
       name = test_filter.replace('.', '_').replace('/', '_')
       for target_build in build_a:
-         if test_name is not None:
+         if test_name != None:
             post_test = f'TESTNAME={test_name} {post_test}'
          test_dir = '$ETDV_RUNDIR/'+glow_test+'/'
-         if glow_plus_args is not '':
+         if glow_plus_args != '':
              test_dir += '/' + args_to_str(glow_plus_args)
          add_diag(builds[target_build], name, test_dir, test_plusargs=plusargs, test_tags=tags, compile_diag=False, pre_test=f'TESTNAME={glow_test} TESTFILTER={test_filter} GLOW_PLUS_ARGS={glow_plus_args} {pre_test}', post_test=post_test, tglw=True, force_test_name=test_name)
 
@@ -1554,8 +1554,8 @@ $ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed=0 {ust_extra_sim_opts} +EMU_L
       # If this is a Minion Shire standalone test, and no minion diag code has been specified, choose a random diag to run on a random traget minion
       diag_plusargs = ''
       diag_compile_opts = ''
-      if (minion_diag is None) or (minion_diag_path is None):
-         if (build is 'shire') :
+      if (minion_diag == None) or (minion_diag_path == None):
+         if (build == 'shire') :
             debug_diag_test = one_of(list(debug_diag_dict.keys()))
             minion_diag = debug_diag_dict[debug_diag_test]["minion_diag"]
             minion_diag_path = f"$MINION_DIAGS/" + debug_diag_dict[debug_diag_test]["minion_diag_path"]
