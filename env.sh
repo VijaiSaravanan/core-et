@@ -1,10 +1,4 @@
 #!/bin/bash
-
-
-#
-# FUNCTIONS
-#
-
 #
 # A couple of basic aliases to preprend and append items to $PATH without duplicates or sorting.
 #
@@ -17,11 +11,9 @@ prepend_path() {
 }
 
 append_path() {
-    # append
-    PATH="${PATH:+"$*:"}$ARG"
+    PATH="${PATH:+$PATH:}$*"
 
-    #and remove duplicates
-    export PATH=$(perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, $ENV{PATH}))')
+    export PATH=$(perl -e 'print join(":", grep { !$seen{$_}++ } split(/:/, $ENV{PATH}))')
 }
 
 function path_remove()  { export PATH=`echo -n $PATH | awk -v RS=: -v ORS=: '$0 != "'$1'"' | sed 's/:$//'`; }
@@ -48,18 +40,20 @@ export RTLROOT=$REPOROOT/rtl
 export DVTOOLS=$REPOROOT/dv/tools
 export SYSEMU=$REPOROOT/extern/et-platform/sw-sysemu
 export BEMU=$SYSEMU # TODO: ANT: remove then references are updated
-export PYTHONPATH=/usr/bin/python3
 export MIN_BIST_DIR=orig
 export IOS_BIST_DIR=orig
 export ET_PG_RAM_ROM_DIR=
 
-export RISCV_GNU_TOOLCHAIN=/tools/src/riscv-gnu-toolchain
-export RISCV_BFD_BUILD=${RISCV_GNU_TOOLCHAIN}/build-binutils-pic
-export RISCV=$HOME/vyoma/workspace/tools/install/riscv
+# RISC-V 
+export RISCV=$HOME/work/tools/riscv
+
+# Source tree (optional, only if you cloned it)
+export RISCV_GNU_TOOLCHAIN=$HOME/work/tools/src/riscv-gnu-toolchain
+export RISCV_BFD_BUILD=$RISCV_GNU_TOOLCHAIN/build-binutils-pic
 export VCSMXFLOW=0
 
 # Add DV common scripts to path
-prepend_path $REPOROOT/dv/common/scripts
+prepend_path "$REPOROOT/dv/common/scripts"
 
 # select riscv tools release
 # source $TESTROOT/scripts/select_riscv_tools.sh # TODO: docker?
@@ -72,71 +66,71 @@ if [ -z "$RISCV" ] ; then
     echo "*** Please set environment variable RISCV" 1>&2
     return 1
 else
-    if [ ! -d $RISCV/bin ]; then
+    if [ ! -d "$RISCV/bin" ]; then
         echo " \$RISCV/bin does not exist. Set RISCV properly" 1>&2
         return 1
     fi
-    if which riscv64-unknown-elf-gcc >/dev/null 2>&1 ; then
-        currentRiscv=$( dirname `which riscv64-unknown-elf-gcc`)
-        if [ $currentRiscv != "$RISCV/bin" ]; then
-            prepend_path $RISCV/bin/
+    if command -v riscv64-unknown-elf-gcc >/dev/null 2>&1 ; then
+        currentRiscv=$( dirname `command -v riscv64-unknown-elf-gcc`)
+        if [ "$currentRiscv" != "$RISCV/bin" ]; then
+            prepend_path "$RISCV/bin/"
         fi
     else
-        prepend_path $RISCV/bin/
+        prepend_path "$RISCV/bin/"
     fi
 fi
 
 
 # add rtl test scripts to path, if not already in path
-if which b4c >/dev/null 2>&1 ; then
-    currentB4c=$( dirname `which b4c`)
-    if [ $currentB4c != "$TESTROOT/scripts" ]; then
-        prepend_path $TESTROOT/scripts/
+if command -v b4c >/dev/null 2>&1 ; then
+    currentB4c=$( dirname `command -v b4c`)
+    if [ "$currentB4c" != "$TESTROOT/scripts" ]; then
+        prepend_path "$TESTROOT/scripts/"
     fi
 else
-    prepend_path $TESTROOT/scripts/
+    prepend_path "$TESTROOT/scripts/"
 fi
 
 
 # add performance measurement scripts to path, if not already in path
-if which log_to_stats.py >/dev/null 2>&1 ; then
-    currentLogToPerf=$( dirname `which log_to_stats.py`)
-    if [ $currentLogToPerf != "$REPOROOT/tools/dreams2perf" ]; then
-        prepend_path $REPOROOT/tools/dreams2perf/
+if command -v log_to_stats.py >/dev/null 2>&1 ; then
+    currentLogToPerf=$( dirname `command -v log_to_stats.py`)
+    if [ "$currentLogToPerf" != "$REPOROOT/tools/dreams2perf" ]; then
+        prepend_path "$REPOROOT/tools/dreams2perf/"
     fi
 else
-    prepend_path $REPOROOT/tools/dreams2perf/
+    prepend_path "$REPOROOT/tools/dreams2perf/"
 fi
 
 # add power measurement scripts to path, if not already in path
-if which et-PowerFlow.py >/dev/null 2>&1 ; then
-    currentPowerFlow=$( dirname `which et-PowerFlow.py`)
-    if [ $currentPowerFlow != "$REPOROOT/tools/powerflow" ]; then
-        prepend_path $REPOROOT/tools/powerflow/
+if command -v et-PowerFlow.py >/dev/null 2>&1 ; then
+    currentPowerFlow=$( dirname `command -v et-PowerFlow.py`)
+    if [ "$currentPowerFlow" != "$REPOROOT/tools/powerflow" ]; then
+        prepend_path "$REPOROOT/tools/powerflow/"
     fi
 else
-    prepend_path $REPOROOT/tools/powerflow/
+    prepend_path "$REPOROOT/tools/powerflow/"
 fi
 
 
 # add metrik script to path, if not already in path
-if which metrik.pl >/dev/null 2>&1 ; then
-    currentMetrik=$( dirname `which metrik.pl`)
-    if [ $currentMetrik != $METRIK ]; then
-        prepend_path PATH=$METRIK/
+if command -v metrik.pl >/dev/null 2>&1 ; then
+    currentMetrik=$( dirname `command -v metrik.pl`)
+    if [ "$currentMetrik" != $METRIK ]; then
+        prepend_path "$METRIK/"
     fi
 else
-    prepend_path $METRIK/
+    prepend_path "$METRIK/"
 fi
 
 # add dv tools to path, if not already in path
-if which err_dec.py >/dev/null 2>&1 ; then
-    currentErrDec=$( dirname `which err_dec.py`)
-    if [ $currentErrDec != "$DVTOOLS" ]; then
-       prepend_path $DVTOOLS
+if command -v err_dec.py >/dev/null 2>&1 ; then
+    currentErrDec=$( dirname `command -v err_dec.py`)
+    if [ "$currentErrDec" != "$DVTOOLS" ]; then
+       prepend_path "$DVTOOLS"
     fi
 else
-    prepend_path $DVTOOLS
+    prepend_path "$DVTOOLS"
 fi
 
 
@@ -172,23 +166,25 @@ export DISABLE_TDC_DELETED_MSG=1        # Fixes the issue with KDB mismatch bug
 # Verilator
 # --------------------------------------------------
 
-export VERILATOR_HOME=$HOME/vyoma/workspace/tools/verilator
-prepend_path ${VERILATOR_HOME}/bin
+export VERILATOR_INSTALL=$HOME/work/tools/verilator
+prepend_path "$VERILATOR_INSTALL/bin"
+
+unset VERILATOR_ROOT
+
+export PYTHON310_HOME=$HOME/work/tools/python310
+prepend_path "$PYTHON310_HOME/bin"
 #
 # Setup et-runsyn.pl
 #
 export RUNSYN_HOME=$REPOROOT/tools/runsyn
-prepend_path ${RUNSYN_HOME}
+prepend_path "$RUNSYN_HOME"
 
-#
-# Setup et-interfaces.pl
-#
-export RUNSYN_HOME=$REPOROOT/tools/interfaces
-prepend_path ${RUNSYN_HOME}
+export INTERFACES_HOME=$REPOROOT/tools/interfaces
+prepend_path "$INTERFACES_HOME"
 
 dir=$REPOROOT/dv/tools/etdv/bin
 if [ -d $dir ] ; then
-    prepend_path $dir
+    prepend_path "$dir"
 fi
 unset dir
 export ETDV_DEFAULT_CONFIG=$REPOROOT/dv/tests/minion_core/regress_lists/minion.etdv.py
@@ -208,11 +204,14 @@ if [ "$LC_ALL" != "en_US.UTF-8" ]; then
 fi
 
 # and configure lib location
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/lib
-# workaround inconsistent caffe2 dependencies installation between GLOW hosts
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib_new/
-# add path to Protobuf (required for Glow build
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/
+# Shared libraries
+export LD_LIBRARY_PATH="$RISCV/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+[ -d /usr/local/lib_new ] && \
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib_new"
+
+[ -d /usr/lib ] && \
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/lib"
 
 export REPLACE_XRUN=vcs
 
