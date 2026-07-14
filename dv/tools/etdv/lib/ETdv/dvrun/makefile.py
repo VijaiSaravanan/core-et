@@ -158,7 +158,7 @@ class Makefile:
             """
             return self.test[name]
 
-    GET_RUN_ID_TEMPLATE = """#!/usr/bin/env python3.6
+    GET_RUN_ID_TEMPLATE = """#!/usr/bin/env python3
 
 import sys
 

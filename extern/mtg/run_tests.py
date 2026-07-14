@@ -26,9 +26,9 @@ def run_single_test(seed: int, test_dir: str, config: str, ncomps: int,
     """
 
     env = os.environ.copy()
-    env['PATH'] = f"/opt/et/bin:{env.get('PATH', '')}"
-    env['MINION_DIAGS'] = os.path.expanduser('~/nekkoai/cosim/dv/tests/minion_core/c_asm_tests/')
-    env['REPOROOT'] = os.path.expanduser('~/nekkoai/cosim/')
+    env['PATH'] = f"/tmp/sw-sysemu-build:{env.get('PATH', '')}"
+    env['MINION_DIAGS'] = os.path.expanduser('~/vyoma/workspace/projects/july7/core-et/dv/tests/minion_core/c_asm_tests/')
+    env['REPOROOT'] = os.path.expanduser('~/vyoma/workspace/projects/july7/core-et/')
     env['MTG_TARGET'] = 'erbium'
 
     # Create unique subdirectory with timestamp_seed for each test run

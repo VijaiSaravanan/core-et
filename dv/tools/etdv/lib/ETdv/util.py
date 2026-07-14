@@ -5,7 +5,8 @@
 General purpose utilities
 """
 
-import collections, sys, os, fcntl, time, re, subprocess
+from collections.abc import Iterable
+import sys, os, fcntl, time, re, subprocess
 from functools import reduce
 from os import (environ, path)
 from datetime import datetime
@@ -170,7 +171,7 @@ def flatten(x):
     :param x: list to flatten.
     :return: single list.
     """
-    if isinstance(x, collections.Iterable) and not isinstance(x, str):
+    if isinstance(x, Iterable) and not isinstance(x, str):
         return [a for i in x for a in flatten(i)]
     else:
         return [x]

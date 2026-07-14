@@ -72,7 +72,7 @@ post_mako = tmp.render(addr=args.crc_mem_addr, size=args.crc_mem_size, CRC_REGIO
 gen_src_file(output_filename, post_mako)
 
 # Compile the intermediate ELF that contains the prints for the CRC16 memory region
-compile_cmd = "EXTRA_CFLAGS+=' -DGEN_CHECKPOINT' "+str(cwd)+"/../../compile/compile.sh "+str(prefix)+" "+str(elf_name)
+compile_cmd = "EXTRA_CFLAGS=' -DGEN_CHECKPOINT' "+str(cwd)+"/../../compile/compile.sh "+str(prefix)+" "+str(elf_name)
 print("Compiling with: "+compile_cmd)
 system(compile_cmd)
 

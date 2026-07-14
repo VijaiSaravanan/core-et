@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 # Copyright (c) 2026 Ainekko
 # SPDX-License-Identifier: Apache-2.0
 
