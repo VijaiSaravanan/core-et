@@ -33,13 +33,13 @@ VERILATOR_JOBS ?= $(shell procs=$$(getconf _NPROCESSORS_ONLN 2>/dev/null || npro
 XRAND_FLAGS ?= --x-initial unique
 XRAND_SEED  ?= 1
 XRAND_ARGS  ?= +verilator+rand+reset+2 +verilator+seed+$(XRAND_SEED)
-
+CC_SRCS += $(VERILATOR_MAIN_CPP)
 BUILD_DIR  ?= $(CURDIR)/build
 include $(REPOROOT)/dv/arch_monitors/common/cosim.mk
 include $(REPOROOT)/dv/standalone/common/common_cc.mk
 COMMON_FLAGS := \
   -sv --cc --exe --build --timing -j $(VERILATOR_JOBS) -Wall --assert -f $(VERILATOR_FILELIST) $(VERILATOR_CONTROL_FILE) \
-  -CFLAGS "-std=c++17 -DVERILATOR -DTRACE -I$(REPO_ROOT)/dv/common $(COSIM_CXXINC)" \
+  -CFLAGS "-std=c++17 -DVERILATOR -DTRACE -I$(REPO_ROOT)/dv/common $(COSIM_CXXINC) -I$(REPO_ROOT)/dv/arch_monitors/libs" \
   -LDFLAGS " -lpthread -lz -no-pie $(COSIM_LDFLAGS) " 
 #--coverage
 

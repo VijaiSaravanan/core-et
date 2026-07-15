@@ -85,7 +85,7 @@ module erbium_ip_stub
 
    localparam              NSLAVES = 2, NCHANNELS = 2;
    localparam              BCHN = 0, RCHN = 1;
-   localparam              MRAM = 0, APB_SLV = 1;
+   localparam              MRAM_IDX = 0, APB_SLV_IDX = 1;
 
    
 logic                      mram_aw_valid;
@@ -148,7 +148,7 @@ logic                       cpu_sub_r_ready;
    logic will_push_w, will_pop_w;
    logic aw_target_is_mram, w_target_is_mram;
    
-   // Routing CPU AXI to MRAM or AXI
+   // Routing CPU AXI to MRAM_IDX or AXI
    assign aw_target_is_mram = !addr_is_esr(axi_AWADDR);
    always_ff @(negedge clock) // VCS don't allow dyamic calls (q.size())  outside procedures and ignore them from the sensistivity list
      w_target_is_mram = w_target_q.size() > 0 ? w_target_q[0] : aw_target_is_mram;
@@ -189,31 +189,31 @@ logic                       cpu_sub_r_ready;
 
 
    
-   // Mux MRAM and Bridge to CPU
+   // Mux MRAM_IDX and Bridge to CPU
    logic [NSLAVES-1:0][NCHANNELS-1:0] grant, bid;
    logic [NCHANNELS-1:0]              stall;
    
-   assign axi_BID     = grant[BCHN][MRAM] ? mram_b_id     : cpu_sub_b_id;
-   assign axi_BRESP   = grant[BCHN][MRAM] ? mram_b_resp   : cpu_sub_b_resp;
-   assign axi_BVALID  = grant[BCHN][MRAM] ? mram_b_valid  : cpu_sub_b_valid;
-   assign axi_RID     = grant[RCHN][MRAM] ? mram_r_id     : cpu_sub_r_id;
-   assign axi_RDATA   = grant[RCHN][MRAM] ? mram_r_data   : cpu_sub_r_data;
-   assign axi_RRESP   = grant[RCHN][MRAM] ? mram_r_resp   : cpu_sub_r_resp;
-   assign axi_RLAST   = grant[RCHN][MRAM] ? mram_r_last   : cpu_sub_r_last;
-   assign axi_RVALID  = grant[RCHN][MRAM] ? mram_r_valid  : cpu_sub_r_valid;
+   assign axi_BID     = grant[BCHN][MRAM_IDX] ? mram_b_id     : cpu_sub_b_id;
+   assign axi_BRESP   = grant[BCHN][MRAM_IDX] ? mram_b_resp   : cpu_sub_b_resp;
+   assign axi_BVALID  = grant[BCHN][MRAM_IDX] ? mram_b_valid  : cpu_sub_b_valid;
+   assign axi_RID     = grant[RCHN][MRAM_IDX] ? mram_r_id     : cpu_sub_r_id;
+   assign axi_RDATA   = grant[RCHN][MRAM_IDX] ? mram_r_data   : cpu_sub_r_data;
+   assign axi_RRESP   = grant[RCHN][MRAM_IDX] ? mram_r_resp   : cpu_sub_r_resp;
+   assign axi_RLAST   = grant[RCHN][MRAM_IDX] ? mram_r_last   : cpu_sub_r_last;
+   assign axi_RVALID  = grant[RCHN][MRAM_IDX] ? mram_r_valid  : cpu_sub_r_valid;
 
    assign stall[BCHN] = !axi_BREADY;
    assign stall[RCHN] = !axi_RREADY;
 
-   assign bid[BCHN][MRAM]    = mram_b_valid;
-   assign bid[BCHN][APB_SLV] = cpu_sub_b_valid;   
-   assign bid[RCHN][MRAM]    = mram_r_valid;
-   assign bid[RCHN][APB_SLV] = cpu_sub_r_valid;   
+   assign bid[BCHN][MRAM_IDX]    = mram_b_valid;
+   assign bid[BCHN][APB_SLV_IDX] = cpu_sub_b_valid;   
+   assign bid[RCHN][MRAM_IDX]    = mram_r_valid;
+   assign bid[RCHN][APB_SLV_IDX] = cpu_sub_r_valid;   
 
-   assign mram_r_ready    = grant[RCHN][MRAM]    && axi_RREADY;
-   assign cpu_sub_r_ready = grant[RCHN][APB_SLV] && axi_RREADY;   
-   assign mram_b_ready    = grant[BCHN][MRAM]    && axi_BREADY;
-   assign cpu_sub_b_ready = grant[BCHN][APB_SLV] && axi_BREADY;   
+   assign mram_r_ready    = grant[RCHN][MRAM_IDX]    && axi_RREADY;
+   assign cpu_sub_r_ready = grant[RCHN][APB_SLV_IDX] && axi_RREADY;   
+   assign mram_b_ready    = grant[BCHN][MRAM_IDX]    && axi_BREADY;
+   assign cpu_sub_b_ready = grant[BCHN][APB_SLV_IDX] && axi_BREADY;   
    
    // Arbiters
    arb_lru_grant #(.NUM_CLIENTS(NSLAVES)) lru_bchn (.clock(clock),.reset(reset),.bid(bid[BCHN]),
