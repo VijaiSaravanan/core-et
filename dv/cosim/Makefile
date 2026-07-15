@@ -49,7 +49,7 @@ else
     CC  = gcc
 endif
 
-CXXFLAGS = -std=c++17 -g -DFMT_HEADER_ONLY $(EXTRA_MAKE_OPTS)
+CXXFLAGS = -std=c++20 -g -DFMT_HEADER_ONLY $(EXTRA_MAKE_OPTS)
 LDFLAGS  = -Lbuild -L$(BFDROOT)/lib -L$(libfpu_OBJDIR) -L$(EXTRA_SYSTEM_CPP_LIBS)/lz4/1.8.0/lib
 
 AR = ar

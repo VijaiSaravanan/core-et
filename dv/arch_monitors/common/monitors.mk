@@ -9,7 +9,7 @@ VERILATOR_SHARE=$(VERILATOR_HOME)/share/verilator
 MONITORS_CXXINC += \
         -I$(VERILATOR_HOME)/include \
         -I$(VERILATOR_HOME)/include/vltstd 
-MONITORS_CFLAGS += -std=c++14 -Os  $(MONITORS_DEFINES)
+MONITORS_CFLAGS += -std=c++20 -Os  $(MONITORS_DEFINES)
 MONITORS_CXXINC += \
           -I$(COSIM_UTILS)/libs \
            $(COSIM_CXXINC) \

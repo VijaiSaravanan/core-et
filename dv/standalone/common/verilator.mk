@@ -50,10 +50,11 @@ INCDIRS += \
 SYSEMU_LIBDIR := $(REPO_ROOT)/extern/et-platform/sw-sysemu-prefix/src/sw-sysemu-build
 
 COMMON_FLAGS := \
-  -sv --cc --exe --vpi --build --timing -j $(VERILATOR_JOBS) -Wall --assert -f $(VERILATOR_FILELIST) $(VERILATOR_CONTROL_FILE) \
-  -CFLAGS "-std=c++17 -DVERILATOR -DTRACE -I$(REPO_ROOT)/dv/common $(COSIM_CXXINC) $(addprefix -I,$(INCDIRS))" \
-  -LDFLAGS " -lpthread -lz -no-pie $(COSIM_LDFLAGS) -L$(SYSEMU_LIBDIR) -lsw-sysemu -Wl,--allow-multiple-definition -lsw-erbium" # -Wl,-rpath=$(SYSEMU_LIBDIR) 
-#--coverage
+  -sv --cc --exe --vpi --build --coverage --debug --gdbbt --timing -j $(VERILATOR_JOBS) -Wall --assert -f $(VERILATOR_FILELIST) $(VERILATOR_CONTROL_FILE) \
+  -CFLAGS " -fno-omit-frame-pointer -std=c++20 -DVERILATOR -DTRACE -I$(REPO_ROOT)/dv/common $(COSIM_CXXINC) $(addprefix -I,$(INCDIRS))" \
+  -LDFLAGS " -lpthread -lz -no-pie $(COSIM_LDFLAGS) -L$(SYSEMU_LIBDIR) -lsw-erbium" # -fsanitize=address -Wl,-rpath=$(SYSEMU_LIBDIR) -lsw-sysemu -Wl,--allow-multiple-definition 
+#CF FLAGS:-g -fsanitize=address
+#
 
 #Warnings
 COMMON_FLAGS += -Wno-UNOPTFLAT -Wno-UNUSEDSIGNAL -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME -Wno-UNUSEDPARAM \
