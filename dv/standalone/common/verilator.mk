@@ -33,14 +33,26 @@ VERILATOR_JOBS ?= $(shell procs=$$(getconf _NPROCESSORS_ONLN 2>/dev/null || npro
 XRAND_FLAGS ?= --x-initial unique
 XRAND_SEED  ?= 1
 XRAND_ARGS  ?= +verilator+rand+reset+2 +verilator+seed+$(XRAND_SEED)
-
+CC_SRCS += $(VERILATOR_MAIN_CPP)
 BUILD_DIR  ?= $(CURDIR)/build
 include $(REPOROOT)/dv/arch_monitors/common/cosim.mk
 include $(REPOROOT)/dv/standalone/common/common_cc.mk
+INCDIRS += \
+  $(REPO_ROOT)/dv/common \
+  $(REPO_ROOT)/dv/arch_monitors/libs \
+  $(REPO_ROOT)/dv/standalone/common \
+  $(REPO_ROOT)/dv/standalone/cpu_subsystem/csrc \
+  $(REPO_ROOT)/dv/cosim/src \
+  $(REPO_ROOT)/dv/cosim/src/checker \
+  $(REPO_ROOT)/dv/arch_monitors/csrc \
+  $(REPO_ROOT)/extern/et-platform/sw-sysemu
+
+SYSEMU_LIBDIR := $(REPO_ROOT)/extern/et-platform/sw-sysemu-prefix/src/sw-sysemu-build
+
 COMMON_FLAGS := \
-  -sv --cc --exe --build --timing -j $(VERILATOR_JOBS) -Wall --assert -f $(VERILATOR_FILELIST) $(VERILATOR_CONTROL_FILE) \
-  -CFLAGS "-std=c++17 -DVERILATOR -DTRACE -I$(REPO_ROOT)/dv/common $(COSIM_CXXINC)" \
-  -LDFLAGS " -lpthread -lz -no-pie $(COSIM_LDFLAGS) " 
+  -sv --cc --exe --vpi --build --timing -j $(VERILATOR_JOBS) -Wall --assert -f $(VERILATOR_FILELIST) $(VERILATOR_CONTROL_FILE) \
+  -CFLAGS "-std=c++17 -DVERILATOR -DTRACE -I$(REPO_ROOT)/dv/common $(COSIM_CXXINC) $(addprefix -I,$(INCDIRS))" \
+  -LDFLAGS " -lpthread -lz -no-pie $(COSIM_LDFLAGS) -L$(SYSEMU_LIBDIR) -lsw-sysemu -Wl,--allow-multiple-definition -lsw-erbium" # -Wl,-rpath=$(SYSEMU_LIBDIR) 
 #--coverage
 
 #Warnings
@@ -63,7 +75,7 @@ test-xrand: $(addprefix test-xrand-,$(TESTS))
 
 # Generate build+run rules for each test
 define TEST_template
-test-$(1): $(BUILD_DIR)/obj_$(1)/V$($(1)_TOP) $(COSIM_DEPENDENCIES)
+test-$(1): $(BUILD_DIR)/obj_$(1)/V$($(1)_TOP) $(MONITORS_DEPENDENCIES) $(COSIM_DEPENDENCIES)
 	@echo "──── run $($(1)_TOP) ────"
 	@$$< $($(1)_ARGS) +verilator+coverage+file+$(BUILD_DIR)/obj_$(1)/coverage.dat
 	@if [ -f $(BUILD_DIR)/obj_$(1)/coverage.dat ]; then \
@@ -71,7 +83,7 @@ test-$(1): $(BUILD_DIR)/obj_$(1)/V$($(1)_TOP) $(COSIM_DEPENDENCIES)
 	    $(BUILD_DIR)/obj_$(1)/coverage.dat; \
 	fi
 
-test-xrand-$(1): $(BUILD_DIR)/xrand_obj_$(1)/V$($(1)_TOP) $(COSIM_DEPENDENCIES)
+test-xrand-$(1): $(BUILD_DIR)/xrand_obj_$(1)/V$($(1)_TOP) $(MONITORS_DEPENDENCIES) $(COSIM_DEPENDENCIES)
 	@echo "──── run $($(1)_TOP) [xrand seed=$(XRAND_SEED)] ────"
 	@$$< $($(1)_ARGS) $(XRAND_ARGS) +verilator+coverage+file+$(BUILD_DIR)/xrand_obj_$(1)/coverage.dat
 	@if [ -f $(BUILD_DIR)/xrand_obj_$(1)/coverage.dat ]; then \
@@ -79,7 +91,7 @@ test-xrand-$(1): $(BUILD_DIR)/xrand_obj_$(1)/V$($(1)_TOP) $(COSIM_DEPENDENCIES)
 	    $(BUILD_DIR)/xrand_obj_$(1)/coverage.dat; \
 	fi
 
-$(BUILD_DIR)/obj_$(1)/V$($(1)_TOP): $(COSIM_DEPENDENCIES) $($(1)_SRCS)
+$(BUILD_DIR)/obj_$(1)/V$($(1)_TOP): $(MONITORS_DEPENDENCIES) $(COSIM_DEPENDENCIES) $($(1)_SRCS)
 	@mkdir -p $(BUILD_DIR)
 	$(VERILATOR) $(COMMON_FLAGS) $($(1)_FLAGS) \
 	  --Mdir $(BUILD_DIR)/obj_$(1) \
@@ -87,7 +99,7 @@ $(BUILD_DIR)/obj_$(1)/V$($(1)_TOP): $(COSIM_DEPENDENCIES) $($(1)_SRCS)
 	  -o V$($(1)_TOP) \
 	  $$^
 
-$(BUILD_DIR)/xrand_obj_$(1)/V$($(1)_TOP): $(COSIM_DEPENDENCIES) $($(1)_SRCS)
+$(BUILD_DIR)/xrand_obj_$(1)/V$($(1)_TOP): $(MONITORS_DEPENDENCIES) $(COSIM_DEPENDENCIES) $($(1)_SRCS)
 	@mkdir -p $(BUILD_DIR)
 	$(VERILATOR) $(COMMON_FLAGS) $(XRAND_FLAGS) $($(1)_FLAGS) \
 	  --Mdir $(BUILD_DIR)/xrand_obj_$(1) \
@@ -165,7 +177,7 @@ lint:
 	  --top-module $(TB_TOP) \
 	  $(RTL_SRCS)
 
-$(OBJ_DIR)/V$(TB_TOP): $(COSIM_DEPENDENCIES) $(RTL_SRCS) $(CC_SRCS)
+$(OBJ_DIR)/V$(TB_TOP): $(MONITORS_DEPENDENCIES) $(COSIM_DEPENDENCIES) $(RTL_SRCS) $(CC_SRCS)
 	@mkdir -p $(BUILD_DIR)
 	$(VERILATOR) $(COMMON_FLAGS) \
 	  --Mdir $(OBJ_DIR) \
@@ -175,7 +187,7 @@ $(OBJ_DIR)/V$(TB_TOP): $(COSIM_DEPENDENCIES) $(RTL_SRCS) $(CC_SRCS)
 	  -o V$(TB_TOP) \
 	  $^
 
-$(OBJ_DIR_XR)/V$(TB_TOP): $(COSIM_DEPENDENCIES) $(RTL_SRCS) $(CC_SRCS)
+$(OBJ_DIR_XR)/V$(TB_TOP): $(MONITORS_DEPENDENCIES) $(COSIM_DEPENDENCIES) $(RTL_SRCS) $(CC_SRCS)
 	@mkdir -p $(BUILD_DIR)
 	$(VERILATOR) $(COMMON_FLAGS) $(XRAND_FLAGS) \
 	  --Mdir $(OBJ_DIR_XR) \
@@ -185,7 +197,7 @@ $(OBJ_DIR_XR)/V$(TB_TOP): $(COSIM_DEPENDENCIES) $(RTL_SRCS) $(CC_SRCS)
 	  -o V$(TB_TOP) \
 	  $^
 
-$(OBJ_DIR_TR)/V$(TB_TOP): $(COSIM_DEPENDENCIES) $(RTL_SRCS) $(CC_SRCS)
+$(OBJ_DIR_TR)/V$(TB_TOP): $(MONITORS_DEPENDENCIES) $(COSIM_DEPENDENCIES) $(RTL_SRCS) $(CC_SRCS)
 	@mkdir -p $(BUILD_DIR)
 	$(VERILATOR) $(COMMON_FLAGS) \
 	  --trace \

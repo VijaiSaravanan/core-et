@@ -27,7 +27,7 @@ else ifneq ($(wildcard $(RISCV_BFD_BUILD)/bfd/.libs/libbfd.a),)
 else
     BFDROOT  := /usr/lib/x86_64-linux-gnu
     BFD_INC  := /usr/include
-    BFD_LIBS := -l:libbfd-multiarch.so -l:libopcodes-multiarch.so
+    BFD_LIBS := -lbfd -lopcodes
 endif
 
 COSIM_UTILS   ?= $(REPOROOT)/dv/arch_monitors
@@ -93,6 +93,8 @@ CXXFLAGS += -I$(COSIM)/src \
 		-I$(COSIM_UTILS)/libs \
 		-I$(REPOROOT)/extern/et-platform/erbium-hal/include \
 		-I$(REPOROOT)/extern/et-platform/sw-sysemu/sys_emu \
+		-I$(REPOROOT)/extern/et-platform/sw-sysemu-prefix/src/sw-sysemu-build/sw-sysemu/include/sw-sysemu \
+		-I$(REPOROOT)/extern/et-platform/sw-sysemu-prefix/src/sw-sysemu-build/sw-sysemu \
 		-I$(VERILATOR_ROOT)/include/vltstd \
 		-I$(VERILATOR_ROOT)/include \
 	    $(foreach d,$(BFD_INC),-I$(d)) \
