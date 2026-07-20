@@ -8,6 +8,8 @@
 #include <sstream>
 #include <iostream>
 
+class sys_emu;
+
 enum logLevel {LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERR, LOG_FTL, LOG_INFO_FORCE, NR_LOG_LEVELS};
 
 void endSimAt(uint32_t extraTime=0); // time in time units (ps)
@@ -21,8 +23,8 @@ bool simEnded();
 class testLog
 {
 public:
-  testLog(const std::string &name = "", logLevel logLvl = LOG_INFO):
-  name_(name)
+  __attribute__((always_inline)) testLog(const std::string &name = "", logLevel logLvl = LOG_INFO):
+  name_(name), outputStream_(&std::cout)
   {
     msgStarted_ = false;
     msgInLogLevel_ = false;
@@ -31,9 +33,11 @@ public:
     setLogLevel(logLvl);
   }
 
-  testLog( const testLog &l )
-  : name_(l.name_), msgStarted_(l.msgStarted_), msgInLogLevel_(l.msgInLogLevel_),
-    fatal_(l.fatal_), logLevel_(l.logLevel_)
+  __attribute__((always_inline)) testLog( const testLog &l )
+  : name_(l.name_), outputStream_(l.outputStream_),
+    msgStarted_(l.msgStarted_), msgInLogLevel_(l.msgInLogLevel_),
+    fatal_(l.fatal_), logLevel_(l.logLevel_),
+    device_(l.device_)
   {
     os_ << l.os_.str();
   }
@@ -50,13 +54,15 @@ public:
   void setName (const std::string name) { name_ = name; }
 
   template <class T>
-  testLog &operator<<(T x) {
+  __attribute__((always_inline)) testLog &operator<<(T x) {
     if (msgInLogLevel_) {
       os_<<x;
     }
     return *this;
   }
-  testLog &operator<<(logLevel l) {
+  __attribute__((always_inline)) testLog &operator<<(logLevel l) {
+    static thread_local int curLvl = LOG_DEBUG;
+    curLvl = l;
     if (msgStarted_) {
       std::cout << "previous msg did not finish => [" << name_.c_str() << "]" << os_.str() << std::endl;
     }
@@ -81,7 +87,6 @@ public:
         default:             os_ << "FATAL "; fatal_ = true;
       }
       os_ << name_.c_str() << ": ";
-      curLogLevel_   = l;
       msgInLogLevel_ = true;
     } else {
       msgInLogLevel_ = false;
@@ -94,18 +99,19 @@ public:
   testLog & operator<<(testLog& m(testLog&)) {
     return m(*this);
   }
-  void endl() {
+  __attribute__((always_inline)) void endl() {
     if (msgStarted_) {
       os_ << std::endl;
     }
   }
 
-  void endm() {
+  __attribute__((always_inline)) void endm() {
+    static thread_local int curLvl = LOG_DEBUG;
     if (!msgStarted_) {
       std::cout << "endm without msg start (string=" << os_.str() << ")" << std::endl;
     } else if (msgInLogLevel_) {
-      if ((use_evl_lib_ != 0) && (curLogLevel_ >= LOG_WARN)) {
-        if (sendEVLMessage(curLogLevel_, os_.str()) <= 0) {
+      if ((use_evl_lib_ != 0) && (curLvl >= LOG_WARN)) {
+        if (sendEVLMessage((logLevel)curLvl, os_.str()) <= 0) {
           std::cout << "" << os_.str() << std::endl;
         }
       } else {
@@ -126,16 +132,16 @@ public:
     }
     msgInLogLevel_ = true;
     msgStarted_    = false;
-    curLogLevel_   = LOG_DEBUG;
+    curLvl = LOG_DEBUG;
   }
 
 private:
   std::string name_;
   std::ostringstream os_;
+  std::ostream* outputStream_;
   bool msgStarted_;
   bool msgInLogLevel_;
   bool fatal_;
-  logLevel curLogLevel_ = LOG_DEBUG;
   static unsigned errors_;
   static logLevel globalLogLevel_;
   static logLevel defaultLogLevel_;
@@ -170,6 +176,7 @@ public:
 
  private:
   logLevel logLevel_;
+  sys_emu* device_ = nullptr;
 };
 
 

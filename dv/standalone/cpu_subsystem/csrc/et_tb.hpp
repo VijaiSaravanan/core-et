@@ -54,8 +54,6 @@ public:
       log << LOG_INFO_FORCE << __PRETTY_FUNCTION__ << " et_tb destroyed" << endl;
     }
 
-
-
     void sim() {};
 
 };

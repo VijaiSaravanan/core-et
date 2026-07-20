@@ -492,6 +492,10 @@ void cosim::on(const inst_exception_t* evt) try
     if (!checker_is_on()) return;
 
     const auto minion_id = fixup_ioshire_id(evt->minion_id);
+    if (minion_id >= EMU_NUM_MINIONS) {
+        log << LOG_ERR << "minion_id " << minion_id << " out of range (max: " << EMU_NUM_MINIONS << ")" << endm;
+        return;
+    }
     const hart_id hart(minion_id, evt->thread_id);
     const insn_desc desc(hart, evt->pc);
 
@@ -581,6 +585,10 @@ void cosim::on(const warm_reset_t* evt) try
 {
     if (!checker_is_on()) return;
     const auto minion_id = fixup_ioshire_id(evt->minion_id);
+    if (minion_id >= EMU_NUM_MINIONS) {
+        log << LOG_ERR << "minion_id " << minion_id << " out of range (max: " << EMU_NUM_MINIONS << ")" << endm;
+        return;
+    }
     const hart_id hart(minion_id, 0);
     logger->info(LOG_PREFIX_SHORT "Warm Reset", evt->cycle, hart);
 
@@ -597,6 +605,10 @@ void cosim::on(const inst_interrupt_t* evt) try
     if (!checker_is_on()) return;
 
     const auto minion_id = fixup_ioshire_id(evt->minion_id);
+    if (minion_id >= EMU_NUM_MINIONS) {
+        log << LOG_ERR << "minion_id " << minion_id << " out of range (max: " << EMU_NUM_MINIONS << ")" << endm;
+        return;
+    }
     const hart_id hart(minion_id, evt->thread_id);
     const insn_desc desc(hart, evt->pc);
 

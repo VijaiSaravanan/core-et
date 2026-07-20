@@ -56,7 +56,7 @@ struct cosim_config {
     void parse_arg_desc();
 
     // General settings
-    uint64_t start_pc{ 0x8000001000 };
+    uint64_t start_pc{ 0x2008000 };
     uint64_t spio_start_pc{ 0x0040000000 };
     uint64_t ctrl_start_pc{ 0x8000001000 };
     std::string mem_desc{ "mem_desc.txt" };
