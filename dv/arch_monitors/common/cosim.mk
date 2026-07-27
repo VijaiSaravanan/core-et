@@ -22,7 +22,7 @@ CPP_DEBUG ?=0
  # Add extra include flags
 
 COSIM_DEPENDENCIES += $(cosim_OBJDIR)/libcosim.so
-COSIM_LDFLAGS +=-L$(cosim_OBJDIR) -Wl,-rpath=$(cosim_OBJDIR) -lcosim
+COSIM_LDFLAGS +=-L$(cosim_OBJDIR) -Wl,-rpath=$(cosim_OBJDIR) -lcosim -L$(REPOROOT)/dv/lib/multiarch -Wl,-rpath=$(REPOROOT)/dv/lib/multiarch
 COSIM_CXXINC += -I$(COSIM)/src \
             -I$(COSIM)/src/checker \
             -I$(COSIM)/src/events \
@@ -33,7 +33,10 @@ COSIM_CXXINC += -I$(COSIM)/src \
             -I$(EXTRA_CPP_LIBS)/toml11/3.1.0/include \
 	    -I$(BFDROOT)/include \
 	    -I$(MONITORS_CPATH) \
-	    -I$(SYSEMU)
+	    -I$(SYSEMU) \
+	    -I$(SYSEMU)/sys_emu \
+	    -I$(dir $(SYSEMU))sw-sysemu-prefix/src/sw-sysemu-build/sw-sysemu/include/sw-sysemu \
+	    -I$(dir $(SYSEMU))sw-sysemu-prefix/src/sw-sysemu-build/sw-sysemu
 		
 $(cosim_OBJDIR)/libcosim.so: force_cosim
 	flock $(REPOROOT)/dv/cosim $(MAKE) -j $(MAX_PARALLEL_JOBS) -C $(COSIM) \

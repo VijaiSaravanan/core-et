@@ -52,7 +52,7 @@ sc_add_build(builds, 'config_4m_4b_4sb_4sh',           build_cmd_base + "+define
 sc_add_build(builds, 'config_4m_4b_4sb_2sh',           build_cmd_base + "+define+SC_CACHE_SIZE_IN_MB=4 +define+SC_BANKS=4 +define+SC_SUB_BANKS=4 +define+SC_L3_SHIRES=2                ")
 
 # test commands
-test_cmd_base       = '${ETDV_BUILD_RUNDIR}/vbuild/simv $* +verbosity=NONE +verbositySC_SB_WARN=MEDIUM -licwait 5 '
+test_cmd_base       = '${ETDV_BUILD_RUNDIR}/build/obj/Vtop $* +verbosity=NONE +verbositySC_SB_WARN=MEDIUM -licwait 5 '
 if has_xprop(): test_cmd_base += '-report=xprop '
 rand_test_cmd_base  = test_cmd_base + ' +ntb_random_seed=REPLACE_WITH_RAND '
 

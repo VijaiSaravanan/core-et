@@ -146,8 +146,9 @@ static unsigned long get_mask(bemu::System& system, unsigned thread)
 }
 
 // Creates a new checker
-checker::checker(bool checker_en) : log(system_.log)
+checker::checker(bool checker_en, const std::string& mem_desc) : emu_(mem_desc), log(emu_.system().log)
 {
+    bemu::System& sys = emu_.system();
     waived_csrs.push_back(bemu::CSR_VALIDATION0);
     waived_csrs.push_back(bemu::CSR_VALIDATION1);
     waived_csrs.push_back(bemu::CSR_VALIDATION2);
@@ -202,17 +203,17 @@ checker::checker(bool checker_en) : log(system_.log)
 
     checker_instance = this;
     checker_enabled = checker_en;
-    system_.init(bemu::System::Stepping::A0);
-    system_.set_delayed_msg_port_write(true);
-    system_.cold_reset();
+    sys.init(bemu::System::Stepping::A0);
+    sys.set_delayed_msg_port_write(true);
+    sys.cold_reset();
     for (int i = 0; i < EMU_NUM_SHIRES; i++) {
-        system_.begin_warm_reset(i);
-        system_.end_warm_reset(i);
+        sys.begin_warm_reset(i);
+        sys.end_warm_reset(i);
     }
     for (int i = 0; i < EMU_NUM_THREADS; i++) {
-        system_.cpu[i].warm_reset();
+        sys.cpu[i].warm_reset();
         // TODO: on Erbium use ESR?
-        system_.cpu[i].start_running();
+        sys.cpu[i].start_running();
     }
 
     for (int i = 0; i < EMU_NUM_THREADS; i++) {
@@ -241,16 +242,16 @@ checker::checker(bool checker_en) : log(system_.log)
     int uart_fd = open("/dev/null", O_WRONLY, 0666);
     if (uart_fd < 0) uart_fd = STDOUT_FILENO;
 #if EMU_HAS_PU
-    if (system_.pu_uart0_get_tx_fd() < 0)
-        system_.pu_uart0_set_tx_fd(uart_fd);
-    if (system_.pu_uart1_get_tx_fd() < 0)
-        system_.pu_uart1_set_tx_fd(uart_fd);
+    if (sys.pu_uart0_get_tx_fd() < 0)
+        sys.pu_uart0_set_tx_fd(uart_fd);
+    if (sys.pu_uart1_get_tx_fd() < 0)
+        sys.pu_uart1_set_tx_fd(uart_fd);
 #endif
 #if EMU_HAS_SPIO
-    if (system_.spio_uart0_get_tx_fd() < 0)
-        system_.spio_uart0_set_tx_fd(uart_fd);
-    if (system_.spio_uart1_get_tx_fd() < 0)
-        system_.spio_uart1_set_tx_fd(uart_fd);
+    if (sys.spio_uart0_get_tx_fd() < 0)
+        sys.spio_uart0_set_tx_fd(uart_fd);
+    if (sys.spio_uart1_get_tx_fd() < 0)
+        sys.spio_uart1_set_tx_fd(uart_fd);
 #endif
 #endif
 }
@@ -265,19 +266,19 @@ checker::~checker()
 void checker::start_pc(uint32_t thread, uint64_t pc)
 {
     if (thread >= EMU_NUM_THREADS) log << LOG_ERR << "start pc with thread invalid (" << thread << ")" << endm;
-    system_.cpu[thread].pc = pc;
+    emu_.system().cpu[thread].pc = pc;
 }
 
 // Sets the PC due IPI
 void checker::ipi_pc(uint32_t thread, uint64_t pc)
 {
     if (thread >= EMU_NUM_THREADS) log << LOG_ERR << "IPI pc with thread invalid (" << thread << ")" << endm;
-    system_.cpu[thread].pc = pc;
+    emu_.system().cpu[thread].pc = pc;
 }
 
 void checker::set_icache_prefetch_done(uint32_t shire_id)
 {
-    system_.finish_icache_prefetch(shire_id);
+    emu_.system().finish_icache_prefetch(shire_id);
 }
 
 void checker::emu_disasm(char* str, size_t size, uint32_t bits)
@@ -305,40 +306,40 @@ checker_result checker::emu_inst(uint64_t cycle, cosim_insn_queue_it_t cosim_ins
 
     bool unimpl_esr = false;
 
-    if (system_.cpu[thread].is_blocked()) {
+    if (system().cpu[thread].is_blocked()) {
         log << LOG_INFO << "Delaying retire because thread is blocked" << endm;
         return CHECKER_EXCL_ACCESS;
     }
 
     try
     {
-        system_.cpu[thread].check_pending_interrupts(); // This need to be here because it can trap
+        system().cpu[thread].check_pending_interrupts(); // This need to be here because it can trap
         // Fetch new instruction (may trap)
-        system_.cpu[thread].fetch();
+        system().cpu[thread].fetch();
 
         // Execute the instruction (may trap)
-        system_.cpu[thread].execute();
+        system().cpu[thread].execute();
 
         // check if we have to wake any minions
-        for (auto& hart : system_.awaking) {
+        for (auto& hart : system().awaking) {
             uint32_t minion = bemu::hart_index(hart) / EMU_THREADS_PER_MINION;
             wake_minions.push(minion);
         }
-        system_.awaking.clear();
+        system().awaking.clear();
     }
     catch (const bemu::memory_error& e)
     {
         // BEMU does not model certain memory regions. We need to inject the data from RTL
         if (address_is_in_ignored_region(e.addr) && !changes->bus_error) {
             log << LOG_INFO << "[H" << thread << "]: Ignore access to 0x" << std::hex << e.addr << " @ PC: 0x"
-                << system_.cpu[thread].pc << std::dec << endm;
+                << system().cpu[thread].pc << std::dec << endm;
             emu_state_change = *changes;
             // Ensure mem_p/vaddr are set correctly
             emu_state_change.mem_paddr[0] = e.addr;
             emu_state_change.mem_vaddr[0] = e.addr;
         } else {
             log << LOG_INFO << "[H" << thread << "]: Execution raised Bus Error @ PC: 0x" << std::hex
-                << system_.cpu[thread].pc << std::dec << endm;
+                << system().cpu[thread].pc << std::dec << endm;
             // BEMU (and potentially RTL) raised a bus error
             // Set trap_mod to avoid checking the result of the execution
             emu_state_change.pc_mod = false;
@@ -347,17 +348,17 @@ checker_result checker::emu_inst(uint64_t cycle, cosim_insn_queue_it_t cosim_ins
     }
     catch (const bemu::sysreg_error& e)
     {
-        const char* oper = system_.cpu[thread].inst.is_load() ? "Load from" : "Store to";
+        const char* oper = system().cpu[thread].inst.is_load() ? "Load from" : "Store to";
         log << LOG_INFO << oper << " unimplemented ESR 0x" << std::hex << e.addr << std::dec << endm;
         const auto is_waived_esr = std::find(waived_esrs.begin(), waived_esrs.end(), e.addr) != waived_esrs.end();
         if (!is_waived_esr) {
             log << LOG_ERR << "BEMU didnt implement the ESR @" << std::hex << e.addr << std::dec << endm;
             return CHECKER_ERROR;
         }
-        if (system_.cpu[thread].inst.is_load()) {
+        if (system().cpu[thread].inst.is_load()) {
             log << LOG_INFO << "Injected load data RTL->BEMU with value: 0x" << std::hex << changes->int_reg_data
                 << std::dec << endm;
-            const auto& cur_insn = system_.cpu[thread].inst;
+            const auto& cur_insn = system().cpu[thread].inst;
             const auto op_bits = cur_insn.bits & 0x3;
             // consider moving this to bemu..
             const auto emu_rd = [&]() { // get correct rd based on bits
@@ -368,16 +369,16 @@ checker_result checker::emu_inst(uint64_t cycle, cosim_insn_queue_it_t cosim_ins
                     default: assert(0 && "Unreachable"); return 0u;
                 }
             }();
-            set_xreg(system_, thread, emu_rd, changes->int_reg_data);
+            set_xreg(system(), thread, emu_rd, changes->int_reg_data);
         }
         unimpl_esr = true;
     }
     catch (const bemu::Trap& t)
     {
-        system_.cpu[thread].take_trap(t);
-        log << LOG_INFO << "[H" << thread << "]: Took trap @ PC: 0x" << std::hex << system_.cpu[thread].pc << std::dec
+        system().cpu[thread].take_trap(t);
+        log << LOG_INFO << "[H" << thread << "]: Took trap @ PC: 0x" << std::hex << system().cpu[thread].pc << std::dec
             << endm;
-        check_res = check_state_changes(cycle, thread, changes, system_.cpu[thread].inst,
+        check_res = check_state_changes(cycle, thread, changes, system().cpu[thread].inst,
                                         cosim_inst); // Check partial results here before the
                                                      // trap. Traping will create mismatches
     }
@@ -399,15 +400,15 @@ checker_result checker::emu_inst(uint64_t cycle, cosim_insn_queue_it_t cosim_ins
     // Check results unless we did trap
     if (emu_state_change.trap_mod) {
         log << LOG_INFO << "[H" << thread << "]: Skipping check_state_changes since PC: 0x " << std::hex
-            << system_.cpu[thread].pc << " marked as taken trap" << std::dec << endm;
+            << system().cpu[thread].pc << " marked as taken trap" << std::dec << endm;
     } else if (unimpl_esr) {
         log << LOG_INFO << "[H" << thread << "]: Skipping check_state_changes (unimplemented ESR)" << endm;
     } else {
-        check_res = check_state_changes(cycle, thread, changes, system_.cpu[thread].inst, cosim_inst);
+        check_res = check_state_changes(cycle, thread, changes, system().cpu[thread].inst, cosim_inst);
     }
 
     // PC update
-    system_.cpu[thread].advance_pc();
+    system().cpu[thread].advance_pc();
 
     return check_res;
 }
@@ -424,14 +425,14 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
 #ifdef DEBUG_STATE_CHANGES
         inst_state_change tmp_state_change = emu_state_change;
         // to avoid false diffs
-        if (!emu_state_change.pc_mod) tmp_state_change.pc = system_.cpu[thread].pc;
+        if (!emu_state_change.pc_mod) tmp_state_change.pc = system().cpu[thread].pc;
         tmp_state_change.inst_bits = changes->inst_bits;
         log << LOG_DEBUG << "EMU changes: " << tmp_state_change << endm;
         log << LOG_DEBUG << "RTL changes: " << (*changes) << endm;
 #endif
         char insn_disasm[128];
         riscv_disasm(insn_disasm, 128, inst.bits);
-        stream << "BEMU Checker mismatch for thread " << thread << " @ PC 0x" << std::hex << system_.cpu[thread].pc
+        stream << "BEMU Checker mismatch for thread " << thread << " @ PC 0x" << std::hex << system().cpu[thread].pc
                << std::dec << " (" << insn_disasm << ") -> ";
 
         // The instruction trap
@@ -487,8 +488,8 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
         }
 
         // Check PC
-        if (changes->pc != system_.cpu[thread].pc) {
-            stream << "BEMU Checker PC mismatch. BEMU expects PC: 0x" << std::hex << system_.cpu[thread].pc
+        if (changes->pc != system().cpu[thread].pc) {
+            stream << "BEMU Checker PC mismatch. BEMU expects PC: 0x" << std::hex << system().cpu[thread].pc
                    << " but DUT reported PC: 0x" << changes->pc << std::dec << std::endl;
             // don't check anything else when PC mismatches... everything would mismatch
             check_res = CHECKER_ERROR;
@@ -524,7 +525,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                     << " Addr: " << emu_state_change.mem_paddr[0]
                     << " injecting data RTL-> BEMU with value:" << changes->int_reg_data << endm;
                 emu_state_change.int_reg_data = changes->int_reg_data;
-                set_xreg(system_, thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
+                set_xreg(system(), thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
             }
 
             // Check if we read a CSR that we want to waive checking for
@@ -534,7 +535,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                     << " Waived CSR Read Access: Instruction:" << insn_disasm
                     << " injecting data RTL-> BEMU with value:" << changes->int_reg_data << endm;
                 emu_state_change.int_reg_data = changes->int_reg_data;
-                set_xreg(system_, thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
+                set_xreg(system(), thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
             }
 
             // Check if we just read a cycle register, in which case the RTL drives value
@@ -543,7 +544,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                     << " Waived Cycle CSR Read Access: Instruction:" << insn_disasm
                     << " injecting data RTL-> BEMU with value:" << changes->int_reg_data << endm;
                 emu_state_change.int_reg_data = changes->int_reg_data;
-                set_xreg(system_, thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
+                set_xreg(system(), thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
             }
 
             // Check if it_mask is an CMO (Coherent Memory Operation: AMO, etc) (special case where RTL drives value)
@@ -552,7 +553,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                     << " injecting data RTL-> BEMU with value:" << changes->int_reg_data << endm;
                 // Set EMU state to what RTL says
                 emu_state_change.int_reg_data = changes->int_reg_data;
-                set_xreg(system_, thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
+                set_xreg(system(), thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
             }
 
             // Check if this is the last Minion in the Fast Local Barrier (special case where RTL drives value)
@@ -561,7 +562,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                     << ") -injecting data RTL-> BEMU with value: " << changes->int_reg_data << endm;
                 // Set EMU state to what RTL says
                 emu_state_change.int_reg_data = changes->int_reg_data;
-                set_xreg(system_, thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
+                set_xreg(system(), thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
             }
 
             // Check for TBOX accesses here
@@ -571,7 +572,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                     << " injecting data RTL-> BEMU with value:" << changes->int_reg_data << endm;
                 // Set EMU state to what RTL says
                 emu_state_change.int_reg_data = changes->int_reg_data;
-                set_xreg(system_, thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
+                set_xreg(system(), thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
             }
 
             // Read esr_icache_trigger status
@@ -582,7 +583,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                     << " injecting data RTL-> BEMU with value:" << changes->int_reg_data << endm;
                 // Set EMU state to what RTL says
                 emu_state_change.int_reg_data = changes->int_reg_data;
-                set_xreg(system_, thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
+                set_xreg(system(), thread, emu_state_change.int_reg_rd, emu_state_change.int_reg_data);
             }
 
             // Writes to X0/Zero are ignored
@@ -593,7 +594,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                        << std::endl;
                 check_res = CHECKER_ERROR;
                 // Set EMU state to what RTL says
-                set_xreg(system_, thread, emu_state_change.int_reg_rd, changes->int_reg_data);
+                set_xreg(system(), thread, emu_state_change.int_reg_rd, changes->int_reg_data);
             }
         }
 
@@ -634,7 +635,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                     emu_state_change.fp_reg_data[i] = changes->fp_reg_data[i];
                     log << LOG_INFO << "FP Reg [" << i << "]" << changes->int_reg_data << endm;
                 }
-                set_freg(system_, thread, emu_state_change.fp_reg_rd, emu_state_change.fp_reg_data.data());
+                set_freg(system(), thread, emu_state_change.fp_reg_rd, emu_state_change.fp_reg_data.data());
             }
 
             // Check if load comes from an (Coherent Memory Operation: AMO, etc) (special case where RTL drives value)
@@ -646,7 +647,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                     emu_state_change.fp_reg_data[i] = changes->fp_reg_data[i];
                     log << LOG_INFO << "FP Reg [" << i << "]" << changes->int_reg_data << endm;
                 }
-                set_freg(system_, thread, emu_state_change.fp_reg_rd, emu_state_change.fp_reg_data.data());
+                set_freg(system(), thread, emu_state_change.fp_reg_rd, emu_state_change.fp_reg_data.data());
             }
 
             bool fp_reg_data_mismatch = false;
@@ -675,7 +676,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                             stream << "{0x" << std::hex << rtl_datahi << ", 0x" << rtl_datalo << "}";
                         else
                             stream << "0x" << std::hex << (errlo ? rtl_datalo : rtl_datahi);
-                        stream << " Current mask: 0x" << get_mask(system_, thread) << std::dec << std::endl;
+                        stream << " Current mask: 0x" << get_mask(system(), thread) << std::dec << std::endl;
                         check_res = CHECKER_ERROR;
                     }
                 } else {
@@ -703,7 +704,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
                                 stream << "(0x" << std::hex << rtl_datahi << ", 0x" << rtl_datalo << ")";
                             else
                                 stream << "0x" << std::hex << (errlo ? rtl_datalo : rtl_datahi);
-                            stream << " Current mask: 0x" << get_mask(system_, thread) << std::dec << std::endl;
+                            stream << " Current mask: 0x" << get_mask(system(), thread) << std::dec << std::endl;
                             check_res = CHECKER_ERROR;
                         }
                     }
@@ -714,7 +715,7 @@ checker_result checker::check_state_changes(uint64_t cycle, uint32_t thread, bas
 
             // Set EMU state to what RTL says
             if (fp_reg_data_mismatch) {
-                set_freg(system_, thread, changes->fp_reg_rd, changes->fp_reg_data.data());
+                set_freg(system(), thread, changes->fp_reg_rd, changes->fp_reg_data.data());
             }
         }
 
@@ -1099,14 +1100,14 @@ finished_checking:
 void checker::esr_write(uint64_t addr, uint64_t data)
 {
     log << LOG_DEBUG << "ESR Write to Addr: " << std::hex << addr << " Data: " << data << std::dec << endm;
-    system_.esr_write(system_.noagent, addr, data);
+    system().esr_write(system().noagent, addr, data);
 }
 
 void checker::raise_interrupt(unsigned minionId, int cause, uint64_t mip, uint64_t bus_err_addr)
 {
     log << LOG_DEBUG << "Raising interrupt 0x" << std::hex << cause << std::dec << endm;
     (void)mip; // mip not used in sysemu - it computes mip internally as (1 << cause)
-    system_.cpu[minionId].raise_interrupt(cause, bus_err_addr);
+    system().cpu[minionId].raise_interrupt(cause, bus_err_addr);
 }
 
 // Return the last error message
@@ -1122,7 +1123,7 @@ void checker::thread1_enabled(unsigned minionId, uint64_t en, uint64_t pc)
     if (en != threadEnabled[thread]) {
         threadEnabled[thread] = en;
         if (en) {
-            system_.cpu[thread].pc = pc;
+            system().cpu[thread].pc = pc;
         }
     }
 }
@@ -1300,7 +1301,7 @@ void checker::add_ignored_mem_mask(uint64_t match, uint64_t mask)
 
 void checker::thread_port_write(uint32_t target_thread, uint32_t port_id, uint32_t source_thread)
 {
-    system_.commit_msg_port_data(target_thread, port_id, source_thread);
+    system().commit_msg_port_data(target_thread, port_id, source_thread);
 }
 
 void checker::tbox_port_write(uint32_t target_thread, uint32_t port_id, uint32_t tbox_id)
@@ -1318,6 +1319,6 @@ void checker::rbox_port_write(uint32_t target_thread, uint32_t port_id, uint32_t
 std::string checker::get_inst_info(uint64_t cycle, uint32_t thread)
 {
     std::ostringstream s0;
-    s0 << " - cycle=" << cycle << " thread=" << thread << " @ PC 0x" << std::hex << system_.cpu[thread].pc;
+    s0 << " - cycle=" << cycle << " thread=" << thread << " @ PC 0x" << std::hex << system().cpu[thread].pc;
     return s0.str();
 }

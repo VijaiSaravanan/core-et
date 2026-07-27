@@ -35,7 +35,7 @@ test = new_test(
     run_cmd = \
 		f'cd {CWD}' \
 		"""
-        vbuild/simv -l log +dump=1 +verbose_mesh -licwait 5 +tclPath="$REPOROOT/dv/tests/tcl_tests/shire_cache_tcl_tests" +neighStim="rand_all_ops.tcl"
+        build/obj/Vtop -l log +dump=1 +verbose_mesh -licwait 5 +tclPath="$REPOROOT/dv/tests/tcl_tests/shire_cache_tcl_tests" +neighStim="rand_all_ops.tcl"
         """,
     check_cmd= \
 		"@if [ `fgrep -c 'TEST HAS PASSED' $LOG` -eq 4 ]; " \

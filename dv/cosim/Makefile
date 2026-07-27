@@ -27,7 +27,7 @@ else ifneq ($(wildcard $(RISCV_BFD_BUILD)/bfd/.libs/libbfd.a),)
 else
     BFDROOT  := /usr/lib/x86_64-linux-gnu
     BFD_INC  := /usr/include
-    BFD_LIBS := -lbfd -lopcodes
+    BFD_LIBS := -L$(REPOROOT)/dv/lib/multiarch -lbfd -lopcodes
 endif
 
 COSIM_UTILS   ?= $(REPOROOT)/dv/arch_monitors
@@ -71,7 +71,7 @@ endif
 
 # Erbium chip support
 ifeq ($(ERBIUM),1)
-    CXXFLAGS += -DERBIUM -DVERILATOR -DSYS_EMU
+    CXXFLAGS += -DERBIUM -DVERILATOR
 else
     # Add extra errors
     CXXFLAGS += -Wall -Wextra -Werror -pedantic-errors
@@ -80,7 +80,7 @@ endif
 
 EXTRA_CPP_LIBS ?= $(COSIM)/src/3rparty
 EXTRA_SYSTEM_CPP_LIBS ?= /tools/aifoundry
-VERILATOR_ROOT=/usr/local/share/verilator
+VERILATOR_ROOT=/usr/local/share/verilator/include
 # Add extra include flags
 CXXFLAGS += -I$(COSIM)/src \
 	    -I$(COSIM)/src/checker \
@@ -95,8 +95,8 @@ CXXFLAGS += -I$(COSIM)/src \
 		-I$(REPOROOT)/extern/et-platform/sw-sysemu/sys_emu \
 		-I$(REPOROOT)/extern/et-platform/sw-sysemu-prefix/src/sw-sysemu-build/sw-sysemu/include/sw-sysemu \
 		-I$(REPOROOT)/extern/et-platform/sw-sysemu-prefix/src/sw-sysemu-build/sw-sysemu \
-		-I$(VERILATOR_ROOT)/include/vltstd \
-		-I$(VERILATOR_ROOT)/include \
+		-I$(VERILATOR_ROOT)/vltstd \
+		-I$(VERILATOR_ROOT) \
 	    $(foreach d,$(BFD_INC),-I$(d)) \
 	    -I$(VCS_HOME)/include \
 	    -I$(cosim_OBJDIR)
@@ -122,6 +122,7 @@ record_SRCS =	events/cosim_evt.cc \
 		events/manual_dpi_impl.cc
 cosim_SRCS =	$(record_SRCS) \
 		checker/checker.cc \
+		checker/cosim_sys_emu.cc \
 		checker/log.cc \
 		checker/riscv_disasm.cc \
 		support/file_utils.cc \
@@ -150,7 +151,7 @@ cosim_OBJS += $(patsubst %.cpp, $(cosim_OBJDIR)/sysemu/%.pic.o, $(emu_cpp_srcs))
 cosim_DEPS = $(cosim_OBJS:%.o=%.d)
 
 # -lzstd is required for libcosim.so
-cosim_LIBS = -Wl,-rpath=$(BFDROOT)/lib $(BFD_LIBS) $(BFD_EXTRA_LIBS) -lz -lzstd -Wl,-rpath=$(EXTRA_SYSTEM_CPP_LIBS)/lz4/1.8.0/lib -llz4
+cosim_LIBS = -Wl,-rpath=$(BFDROOT)/lib -Wl,-rpath=$(REPOROOT)/dv/lib/multiarch $(BFD_LIBS) $(BFD_EXTRA_LIBS) -lz -lzstd -Wl,-rpath=$(EXTRA_SYSTEM_CPP_LIBS)/lz4/1.8.0/lib -llz4
 
 cosim_TARGET = $(cosim_LIBDIR)/libcosim.so
 $(cosim_TARGET): $(cosim_OBJS) $(libfpu_OBJDIR)/libfpu.a
@@ -175,7 +176,7 @@ $(cosim_OBJDIR)/%.pic.o: $(COSIM)/src/%.cc
 # Special rule for sysemu sources
 $(cosim_OBJDIR)/sysemu/%.pic.o: $(SYSEMU)/%.cpp
 	@mkdir -p $(@D)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -MT '$$(cosim_OBJDIR)/$(@:$(cosim_OBJDIR)/%=%)' -fPIC -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -DSYS_EMU -MMD -MP -MT '$$(cosim_OBJDIR)/$(@:$(cosim_OBJDIR)/%=%)' -fPIC -c $< -o $@
 
 $(libfpu_OBJDIR)/libfpu.a: force
 	$(MAKE) -C $(SYSEMU)/fpu libfpu_OBJDIR=$(abspath $(libfpu_OBJDIR)) DEBUG=$(CPP_DEBUG) CXX=$(CXX) CC=$(CC) 'EXTRA_MAKE_OPTS=$(EXTRA_MAKE_OPTS)' all

@@ -505,7 +505,7 @@ def lsbuildstests(builds):
 
 
 dvutil_default_build_check = \
-      "@if [ -e $(@D)/vbuild/simv ]; then echo pass > $TARGET; else echo fail > $TARGET; fi"
+      "@if [ -e $(@D)/build/obj/Vtop ]; then echo pass > $TARGET; else echo fail > $TARGET; fi"
 dvutil_default_test_check = '@et-dvrun-check-log test ${<}.log ${@} ${SHOW_FAIL}'
 
 dvutil_build_list = []

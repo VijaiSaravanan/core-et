@@ -131,7 +131,7 @@ def build_model options
    @log.et_sys "cd #{ENV['REPOROOT']}/dv/tests/ioshire/scripts; make -f makefile.master swlib"
 
    @log.info "Build Starting!!!"
-   simv_path="#{options[:build_path]}/vbuild/simv"
+   simv_path="#{options[:build_path]}/build/obj/Vtop"
 
 
    options[:simv_path]=simv_path

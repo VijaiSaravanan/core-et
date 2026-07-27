@@ -457,7 +457,7 @@ def add_build_slurm_license(slurm_licenses = ''):
 # \____/ \___/ \___/\_____|___/ \____/
 #
 git_sha_cmd = 'cd $REPOROOT && git rev-parse HEAD > $ETDV_RUNDIR/GIT_SHA && git log $(git rev-parse origin/main~1)..HEAD > $ETDV_RUNDIR/LOCAL-CHANGES'
-standard_build_check = f'[[ -e $(dirname $TARGET)/vbuild/simv ]] && echo pass > $TARGET || echo fail > $TARGET'
+standard_build_check = f'[[ -e $(dirname $TARGET)/build/obj/Vtop ]] && echo pass > $TARGET || echo fail > $TARGET'
 
 # Neighbourhood
 build_neigh_cmd = f'{git_sha_cmd} && cd $ETDV_RUNDIR/ && mkdir -p vbuild && $REPOROOT/dv/standalone/neigh/rebuild {compile_opts}'
@@ -1128,8 +1128,8 @@ else:
       if pre_test != '': run_cmd += f'{pre_test_args} {pre_test}  &&\n'
       run_cmd += f'echo {seed} > SEED\n'
 
-      if not skip_vcs_run: run_cmd += f'$ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {""} {common_sim_opts} \n'
-      else:                run_cmd += f'#$ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {""} {common_sim_opts} \n'
+      if not skip_vcs_run: run_cmd += f'$ETDV_BUILD_RUNDIR/build/obj/Vtop $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {""} {common_sim_opts} \n'
+      else:                run_cmd += f'#$ETDV_BUILD_RUNDIR/build/obj/Vtop $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {""} {common_sim_opts} \n'
 
       if post_test != '': run_cmd += f'{post_test}\n'
 
@@ -1203,7 +1203,7 @@ else:
          if ddr_enable:
              run_cmd += f'$REPOROOT/test/scripts/genZebuMem.pl -micron memImage.hex &&\n'
              test_plusargs += " +ddr_init_zero=1 +ddr_auto_init=1 +memImage=memImage +memImagePath=$ETDV_RUNDIR "
-      if not skip_vcs_run: run_cmd += f'$ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {"+CHECKER=1" if checker else ""} {common_sim_opts}\n'
+      if not skip_vcs_run: run_cmd += f'$ETDV_BUILD_RUNDIR/build/obj/Vtop $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {"+CHECKER=1" if checker else ""} {common_sim_opts}\n'
       else:                run_cmd += 'echo Skip VCS\n'
       if post_test != '': run_cmd += f'{post_test}\n'
       # Set the check command and add test to build
@@ -1273,11 +1273,11 @@ fi
       if (debug_mode):
          add_cmd += f'''
 # Running the test through the UltraSOC flow with logs and debug traces turned on
-$ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed=0 {ust_extra_sim_opts} +verbosity=HIGH +fsdb+struct=on +traceEnable=1 +EMU_LOG_LEVEL=0 +COSIM_LOG_LEVEL=0 +CHECKER=0 +MINION_MASK=0xFFFFFFFF +THREAD_MASK=0x00000000 +l1d_sb_en=0 +neigh_sb_en=0 +py_verbose +py_test=$RTLROOT/ip/ultrasoc/scripts/b4c/bring_up/minion_shire/load_icache_dcache.py +py_start_script=$REPOROOT/test/scripts/start_ust_vcs +py_usb +py_sys=minion-shire_tb +CHECKER=1  +disable_random_data=1 +ALLOC_MEM_RUNTIME=1 +MINION_MASK=0x1 +THREAD_MASK=0x1 +maxErrorCount=1 +SEED=0 +vcs+lic+wait fgp=single_socket_mode,dynamictoggle -reportstats +verbosity=LOW +DEFAULT_LOG_LEVEL=2 >& ust_testme.log
+$ETDV_BUILD_RUNDIR/build/obj/Vtop $* +ntb_random_seed=0 {ust_extra_sim_opts} +verbosity=HIGH +fsdb+struct=on +traceEnable=1 +EMU_LOG_LEVEL=0 +COSIM_LOG_LEVEL=0 +CHECKER=0 +MINION_MASK=0xFFFFFFFF +THREAD_MASK=0x00000000 +l1d_sb_en=0 +neigh_sb_en=0 +py_verbose +py_test=$RTLROOT/ip/ultrasoc/scripts/b4c/bring_up/minion_shire/load_icache_dcache.py +py_start_script=$REPOROOT/test/scripts/start_ust_vcs +py_usb +py_sys=minion-shire_tb +CHECKER=1  +disable_random_data=1 +ALLOC_MEM_RUNTIME=1 +MINION_MASK=0x1 +THREAD_MASK=0x1 +maxErrorCount=1 +SEED=0 +vcs+lic+wait fgp=single_socket_mode,dynamictoggle -reportstats +verbosity=LOW +DEFAULT_LOG_LEVEL=2 >& ust_testme.log
 '''
       else:
          add_cmd += f'''
-$ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed=0 {ust_extra_sim_opts} +EMU_LOG_LEVEL=2 +COSIM_LOG_LEVEL=2 +CHECKER=0 +MINION_MASK=0xFFFFFFFF +THREAD_MASK=0x00000000 +l1d_sb_en=0 +neigh_sb_en=0 +py_test=$RTLROOT/ip/ultrasoc/scripts/b4c/bring_up/minion_shire/load_icache_dcache.py +py_start_script=$REPOROOT/test/scripts/start_ust_vcs +py_usb +py_sys=minion-shire_tb +CHECKER=1  +disable_random_data=1 +ALLOC_MEM_RUNTIME=1 +MINION_MASK=0x1 +THREAD_MASK=0x1 +maxErrorCount=1 +SEED=0 +vcs+lic+wait fgp=single_socket_mode,dynamictoggle -reportstats +verbosity=LOW +DEFAULT_LOG_LEVEL=2 >& ust_testme.log
+$ETDV_BUILD_RUNDIR/build/obj/Vtop $* +ntb_random_seed=0 {ust_extra_sim_opts} +EMU_LOG_LEVEL=2 +COSIM_LOG_LEVEL=2 +CHECKER=0 +MINION_MASK=0xFFFFFFFF +THREAD_MASK=0x00000000 +l1d_sb_en=0 +neigh_sb_en=0 +py_test=$RTLROOT/ip/ultrasoc/scripts/b4c/bring_up/minion_shire/load_icache_dcache.py +py_start_script=$REPOROOT/test/scripts/start_ust_vcs +py_usb +py_sys=minion-shire_tb +CHECKER=1  +disable_random_data=1 +ALLOC_MEM_RUNTIME=1 +MINION_MASK=0x1 +THREAD_MASK=0x1 +maxErrorCount=1 +SEED=0 +vcs+lic+wait fgp=single_socket_mode,dynamictoggle -reportstats +verbosity=LOW +DEFAULT_LOG_LEVEL=2 >& ust_testme.log
 '''
       return add_cmd
 
@@ -1415,8 +1415,8 @@ $ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed=0 {ust_extra_sim_opts} +EMU_L
 
            run_cmd, test_plusargs = overwriteNetDesc(run_cmd, test_plusargs)
 
-      if not skip_vcs_run: run_cmd += f'$ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {"+CHECKER=1" if checker else ""} {common_sim_opts} \n'
-      else:                run_cmd += f'#$ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {"+CHECKER=1" if checker else ""} {common_sim_opts} \n'
+      if not skip_vcs_run: run_cmd += f'$ETDV_BUILD_RUNDIR/build/obj/Vtop $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {"+CHECKER=1" if checker else ""} {common_sim_opts} \n'
+      else:                run_cmd += f'#$ETDV_BUILD_RUNDIR/build/obj/Vtop $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {"+CHECKER=1" if checker else ""} {common_sim_opts} \n'
 
       if (postsi_ust or postsi):
          shire_mask = '0x1'
@@ -1596,7 +1596,7 @@ $ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed=0 {ust_extra_sim_opts} +EMU_L
          run_cmd += 'echo Skip VCS\n'
          check_cmd = '[ -f ${script_dir}/memImage.hex ] && echo PASS > ${@}'
       else:
-         run_cmd += f'$ETDV_BUILD_RUNDIR/vbuild/simv $* {extra_sim_opts} {rand_delays} {common_sim_opts} {"+CHECKER=1" if checker else ""}\n'
+         run_cmd += f'$ETDV_BUILD_RUNDIR/build/obj/Vtop $* {extra_sim_opts} {rand_delays} {common_sim_opts} {"+CHECKER=1" if checker else ""}\n'
          check_cmd = '@et-dvrun-check-log-v2 test ${<}.log ${@} ${SHOW_FAIL}'
       for build_name, build in builds.items():
          build.add_test(new_test(name=f'custom_{test_name}', run_cmd=run_cmd, check_cmd=check_cmd, tags=build_tags))

@@ -150,7 +150,7 @@ The main executable (e.g.: simv) is linked with libcosim.so, so you do not need 
 You will however need to preload the ASAN runtime library (since the main executable will not be linked by default).
 Add this in `testme`:
 
-    LD_PRELOAD=libasan.so.2 $ETDV_BUILD_RUNDIR/vbuild/simv [..]
+    LD_PRELOAD=libasan.so.2 $ETDV_BUILD_RUNDIR/build/obj/Vtop [..]
 
 You may see the following error:
 

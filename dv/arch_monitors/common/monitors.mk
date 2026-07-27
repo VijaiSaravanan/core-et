@@ -4,11 +4,11 @@ CSRCS_FOLDER = $(COSIM_UTILS)/csrc
 CLIBS_FOLDER = $(COSIM_UTILS)/libs
 MONITORS_DEFINES ?= -DVERILATOR
 
-VERILATOR_HOME=/home/vijay/vyoma/workspace/tools/verilator
-VERILATOR_SHARE=$(VERILATOR_HOME)/share/verilator
+VERILATOR_HOME=/usr/local
+VERILATOR_SHARE=$(VERILATOR_HOME)/share/verilator/include
 MONITORS_CXXINC += \
-        -I$(VERILATOR_HOME)/include \
-        -I$(VERILATOR_HOME)/include/vltstd 
+        -I$(VERILATOR_SHARE) \
+        -I$(VERILATOR_SHARE)/vltstd 
 MONITORS_CFLAGS += -std=c++20 -Os  $(MONITORS_DEFINES)
 MONITORS_CXXINC += \
           -I$(COSIM_UTILS)/libs \

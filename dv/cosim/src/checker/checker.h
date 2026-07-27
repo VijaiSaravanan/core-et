@@ -16,6 +16,7 @@
 #include "log.h"
 #include "system.h"
 #include "testLog.h"
+#include "cosim_sys_emu.h"
 
 // Checker results
 typedef enum {
@@ -56,7 +57,7 @@ public:
     using tfma_entry_list = std::deque<tensorfma_entry>;
 
     // Constructor and destructor
-    checker(bool checker_en);
+    checker(bool checker_en, const std::string& mem_desc = "");
     ~checker();
 
     // Sets the PC
@@ -73,10 +74,10 @@ public:
 
     bemu::MainMemory* memory()
     {
-        return &system_.memory;
+        return &emu_.system().memory;
     }
 
-    bemu::System& system() { return system_; }
+    bemu::System& system() { return emu_.system(); }
 
     // enable or disable 2nd thread
     void thread1_enabled(unsigned minionId, uint64_t en, uint64_t pc);
@@ -158,7 +159,7 @@ public:
     }
 
 private:
-    bemu::System system_;
+    cosim_sys_emu emu_;
 
     checker_result check_state_changes(uint64_t cycle, uint32_t thread, base_state_change* changes,
                                        const bemu::Instruction& inst, cosim_insn_queue_it_t cosim_inst);

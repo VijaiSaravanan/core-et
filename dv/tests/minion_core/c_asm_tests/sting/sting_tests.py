@@ -346,7 +346,7 @@ def add_sting_test(build, test_name, sting_args='', test_plusargs='', test_tags=
    if ddr_enable:
         run_cmd += f'$REPOROOT/test/scripts/genZebuMem.pl -micron memImage.hex &&\n'
         test_plusargs += " +ddr_init_zero=1 +ddr_auto_init=1 +memImage=memImage +memImagePath=$ETDV_RUNDIR "
-   if not skip_vcs_run: run_cmd += f'$ETDV_BUILD_RUNDIR/vbuild/simv $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {rand_delays} {common_sim_opts} {"+CHECKER=1" if checker else ""} \n'
+   if not skip_vcs_run: run_cmd += f'$ETDV_BUILD_RUNDIR/build/obj/Vtop $* +ntb_random_seed={seed} {extra_sim_opts} {test_plusargs} {rand_delays} {common_sim_opts} {"+CHECKER=1" if checker else ""} \n'
    else:                run_cmd += 'echo Skip VCS\n'
    # Set the check command and add test to build
    if skip_vcs_run:

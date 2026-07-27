@@ -101,7 +101,7 @@ cosim::cosim() : testBase("COSIM")
 
     // Setup checker
     if (!config_.checker.bypassed) {
-        check = new checker(config_.checker.enabled);
+        check = new checker(config_.checker.enabled, config_.mem_desc);
         // Initialize PCs across threads
         for (unsigned t = 0; t < EMU_NUM_THREADS; ++t) {
             unsigned s = t / EMU_THREADS_PER_SHIRE;

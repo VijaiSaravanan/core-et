@@ -52,7 +52,7 @@ def sc_add_build(builds, build_name, build_cmd, config_name=None, fns=None):
 
    # FIXME Shouldn't need to generate a unique one of these per build. 
    build_check = \
-      "@if [ -e "+build_dir+"/vbuild/simv ]; " \
+      "@if [ -e "+build_dir+"/build/obj/Vtop ]; " \
       "then echo pass > $TARGET; " \
       "else echo fail > $TARGET; " \
       "fi"

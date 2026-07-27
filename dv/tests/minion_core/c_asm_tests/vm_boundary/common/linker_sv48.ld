@@ -21,4 +21,5 @@ SECTIONS
        { *(.last_pg_text_boundary) } 
 }
 
-INSERT AFTER stack
+#INSERT AFTER stack
+INSERT AFTER .stack

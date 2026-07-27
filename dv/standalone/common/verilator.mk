@@ -143,7 +143,7 @@ OBJ_DIR_XR := $(BUILD_DIR)/xrand_obj
 
 test: $(OBJ_DIR)/V$(TB_TOP)
 	@echo "──── run $(TB_TOP) ────"
-	@$< $(SIM_ARGS) +verilator+coverage+file+$(OBJ_DIR)/coverage.dat
+	@LD_LIBRARY_PATH=$(REPOROOT)/dv/lib/multiarch:$(LD_LIBRARY_PATH) $< $(SIM_ARGS) +verilator+coverage+file+$(OBJ_DIR)/coverage.dat
 	@if [ -f $(OBJ_DIR)/coverage.dat ]; then \
 	  verilator_coverage --annotate $(BUILD_DIR)/coverage \
 	    $(OBJ_DIR)/coverage.dat; \

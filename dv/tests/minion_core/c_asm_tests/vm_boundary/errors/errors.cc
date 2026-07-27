@@ -6,7 +6,8 @@
 
 
 // write into validation3 reg => just to see in the waveforms where the test is
-#define PROGRESS(d) __asm__ __volatile__("csrw validation3, %[val]\n" : : [val] "r" (d))
+//#define PROGRESS(d) __asm__ __volatile__("csrw validation3, %[val]\n" : : [val] "r" (d))
+#define PROGRESS(d) __asm__ __volatile__("csrw 0x8d3, %[val]\n" : : [val] "r" (d))
 
 ////////////////////////////////////////////////////////////////////////////////
 // function prototypes and global vars, specifying attributes to select section
