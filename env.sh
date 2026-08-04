@@ -55,7 +55,7 @@ export ET_PG_RAM_ROM_DIR=
 
 export RISCV_GNU_TOOLCHAIN=/home/vsysuser/verif/vyoma/workspace/projects/tools/src/riscv-gnu-toolchain
 export RISCV_BFD_BUILD=${RISCV_GNU_TOOLCHAIN}/build-binutils-pic
-export RISCV=/tools/toolchain_build/riscv
+export RISCV=/home/vsysuser/verif/vyoma/workspace/projects/july7/tools/riscv-elf-toolchain
 export VCSMXFLOW=0
 
 # Add DV common scripts to path
