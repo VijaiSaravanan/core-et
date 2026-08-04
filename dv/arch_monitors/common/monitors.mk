@@ -4,7 +4,7 @@ CSRCS_FOLDER = $(COSIM_UTILS)/csrc
 CLIBS_FOLDER = $(COSIM_UTILS)/libs
 MONITORS_DEFINES ?= -DVERILATOR
 
-VERILATOR_HOME=/usr/local
+VERILATOR_HOME=/home/vsysuser/verif/vyoma/workspace/projects/july7/tools/verilator
 VERILATOR_SHARE=$(VERILATOR_HOME)/share/verilator/include
 MONITORS_CXXINC += \
         -I$(VERILATOR_SHARE) \

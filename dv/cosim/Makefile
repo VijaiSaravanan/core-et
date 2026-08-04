@@ -80,7 +80,7 @@ endif
 
 EXTRA_CPP_LIBS ?= $(COSIM)/src/3rparty
 EXTRA_SYSTEM_CPP_LIBS ?= /tools/aifoundry
-VERILATOR_ROOT=/usr/local/share/verilator/include
+VERILATOR_ROOT=/home/vsysuser/verif/vyoma/workspace/projects/july7/tools/verilator/share/verilator/include
 # Add extra include flags
 CXXFLAGS += -I$(COSIM)/src \
 	    -I$(COSIM)/src/checker \

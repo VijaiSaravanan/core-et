@@ -177,7 +177,7 @@ module arch_state_monitor
 
    `ifndef ZEBU
       initial begin
-         $timeformat (-9);
+         $timeformat(-9, 3, " ns", 10);
          if (!$value$plusargs("GLOBAL_LOG_LEVEL=%d", global_verbose_level)) begin
            global_verbose_level = 0; //DEBUG
          end

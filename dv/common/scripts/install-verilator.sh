@@ -3,8 +3,8 @@ set -e
 
 VERILATOR_VERSION="v5.042"
 
-INSTALL_DIR="/tools/verilator"
-SOURCE_DIR="/tools/src/verilator"
+INSTALL_DIR="/home/vsysuser/verif/vyoma/workspace/projects/july7/tools/verilator"
+SOURCE_DIR="/home/vsysuser/verif/vyoma/workspace/projects/july7/tools/src/verilator"
 
 if [ -x "$INSTALL_DIR/bin/verilator" ]; then
     echo "Verilator already installed at ${INSTALL_DIR}"
@@ -22,6 +22,7 @@ if [ ! -d "$SOURCE_DIR" ]; then
 fi
 
 cd "$SOURCE_DIR"
+git submodule update --init --recursive
 git checkout "$VERILATOR_VERSION"
 
 autoconf

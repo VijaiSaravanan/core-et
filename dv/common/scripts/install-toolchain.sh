@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-INSTALL_DIR="/tools/riscv-elf-toolchain"
-SOURCE_DIR="/tools/src/riscv-gnu-toolchain"
+INSTALL_DIR="/home/vsysuser/verif/vyoma/workspace/projects/july7/tools/riscv-elf-toolchain"
+SOURCE_DIR="/home/vsysuser/verif/vyoma/workspace/projects/july7/tools/src/riscv-gnu-toolchain"
 BFD_BUILD_DIR="$SOURCE_DIR/build-binutils-pic"
 
 if [ ! -d "$INSTALL_DIR" ]; then
@@ -19,6 +19,7 @@ else
     fi
 
     cd "$SOURCE_DIR"
+    git submodule update --init --recursive
     ./configure --prefix="$INSTALL_DIR" --with-arch=rv64imfc --with-abi=lp64f \
                 --with-languages=c,c++ --with-cmodel=medany
     make -j "$(nproc)"
